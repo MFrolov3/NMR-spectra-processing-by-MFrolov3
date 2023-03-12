@@ -5,6 +5,7 @@ import csv
 
 
 # function calculating linear combination of spectra
+#TEST
 def gen_spec(data, max_shifts='assets\max_shifts.csv', c=np.array([random.random() for index in range(20)])):
     for index in range(20):
         array = data[index]
