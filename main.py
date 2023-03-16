@@ -128,9 +128,20 @@ def add_baseline(spectra_sum, ampl, mu, sigma, n):
     return spectra_sum + ampl * np.random.normal(mu, sigma, n)
 
 
-# load all spectra from txt files
-spec_real_data = np.loadtxt(r'assets\mix_met001.txt')
-data = [np.loadtxt(r'assets\met' + f'{i + 1}.txt') for i in range(20)]
+# load all spectra from txt files considering initial concentrations
+def load_some_data(c=np.array([1.1] * METABOLITE_QUANTITY)):
+    spec_real_data_temp = np.loadtxt(r'assets\mix_met001.txt')
+    data_temp = [np.loadtxt(r'assets\met' + f'{i + 1}.txt') for i in range(METABOLITE_QUANTITY)]
+    temp1 = np.array([c[i]*data_temp[i][:, 1] for i in range(METABOLITE_QUANTITY)])
+    output_lst = []
+    for i in range(METABOLITE_QUANTITY):
+        output_lst.append(np.dstack((data_temp[i][:, 0], temp1[i]))[0])
+    return output_lst, spec_real_data_temp
+
+
+r = load_some_data()
+data = r[0]
+spec_real_data = r[1]
 
 # main generation function performance
 next_data = gen_spec(data)[0]
