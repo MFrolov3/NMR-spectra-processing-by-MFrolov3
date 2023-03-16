@@ -47,7 +47,7 @@ def generate_shift_list(max_shift_list):
 def set_concentration():
     return np.random.uniform(0, 1, METABOLITE_QUANTITY)
 
-
+# добавить краткое словесное описание 
 def shift_performing(input_data, joint, shift_list):
     shifted_lst = []
     for index in range(METABOLITE_QUANTITY):
@@ -65,7 +65,7 @@ def shift_performing(input_data, joint, shift_list):
             shifted_lst.append(np.vstack((temp1, temp2)))
     return shifted_lst
 
-
+# добавить краткое словесное описание
 def make_equal_length(data_input):
     tmp1 = data_input.copy()
     min_lst = []
