@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 import random
 import csv
 
@@ -32,6 +33,7 @@ def get_max_shifts_list(max_shifts):
         shifts_rows = [row for row in csv.reader(file)]
         # deleting first string
         shifts_rows.pop(0)
+
     # sorting list of metabolites by alphabet
     return list(sorted(shifts_rows, key=lambda x: x[0].lower()))
 
@@ -47,7 +49,9 @@ def generate_shift_list(max_shift_list):
 def set_concentration():
     return np.random.uniform(0, 1, METABOLITE_QUANTITY)
 
-# добавить краткое словесное описание 
+
+# performing shifts by cutting numpy array from one side and adding
+# missing datapoints with zero intensity from another
 def shift_performing(input_data, joint, shift_list):
     shifted_lst = []
     for index in range(METABOLITE_QUANTITY):
@@ -65,7 +69,9 @@ def shift_performing(input_data, joint, shift_list):
             shifted_lst.append(np.vstack((temp1, temp2)))
     return shifted_lst
 
-# добавить краткое словесное описание
+
+# delete extra data points in order to concatenate
+# in numpy array when shifts are performed
 def make_equal_length(data_input):
     tmp1 = data_input.copy()
     min_lst = []
@@ -79,24 +85,37 @@ def make_equal_length(data_input):
 
 
 # function calculating linear combination of spectra
-def gen_spec(input_dat, max_shifts=r'assets\max_shifts.csv'):
+def gen_spec(input_dat, max_shifts=r'assets\max_shifts.csv', n=1):
     input_data = input_dat.copy()
     input_data = remove_zero(input_data)
-    c = set_concentration()
-    output_c = 100*set_concentration()/np.sum(c)
     max_shift_list = get_max_shifts_list(max_shifts)
-    shift_list = generate_shift_list(max_shift_list)
+    output_lst = []
+    for index in range(n):
+        c = set_concentration()
+        output_c = 100 * set_concentration() / np.sum(c)
+        shift_list = generate_shift_list(max_shift_list)
 
-    new_data_x = np.array([input_data[index][:, 0] + shift_list[index]
-                           for index in range(METABOLITE_QUANTITY)])
-    new_data_y = np.array([c[index] * input_data[index][:, 1]
-                           for index in range(METABOLITE_QUANTITY)])
-    joint = np.dstack((new_data_x, new_data_y))  # concatenation
+        new_data_x = np.array([input_data[index][:, 0] + shift_list[index]
+                               for index in range(METABOLITE_QUANTITY)])
+        new_data_y = np.array([c[index] * input_data[index][:, 1]
+                               for index in range(METABOLITE_QUANTITY)])
+        joint = np.dstack((new_data_x, new_data_y))  # concatenation
 
-    processed_data_lst = shift_performing(input_data, joint, shift_list)
-    processed_data_np = np.array(make_equal_length(processed_data_lst))
-    spectrum_linear_comb_cut = np.sum(processed_data_np[:, :, 1], axis=0)
-    return processed_data_np[12, :, 0], spectrum_linear_comb_cut, output_c
+        processed_data_lst = shift_performing(input_data, joint, shift_list)
+        processed_data_np = np.array(make_equal_length(processed_data_lst))
+        spectrum_linear_comb_cut = np.sum(processed_data_np[:, :, 1], axis=0)
+        output_lst.append((processed_data_np[12, :, 0], spectrum_linear_comb_cut, output_c))
+    return output_lst
+
+
+# function that saves simulated spectra
+# and their own concentration in following csv files
+def save_to_csv(released_product):
+    for index in range(len(released_product)):
+        df = pd.DataFrame(released_product[index][0:2]).transpose()
+        df.to_csv(f'{index + 1}_spec', index=False, header=False)
+        ds = pd.Series(released_product[index][2:3])
+        ds.to_csv(f'{index + 1}_concentration', index=False, header=False)
 
 
 # function for adding white noise to spectra linear combination
@@ -114,11 +133,13 @@ spec_real_data = np.loadtxt(r'assets\mix_met001.txt')
 data = [np.loadtxt(r'assets\met' + f'{i + 1}.txt') for i in range(20)]
 
 # main generation function performance
-next_data = gen_spec(data)
-
+next_data = gen_spec(data)[0]
+# example of using function
+save_to_csv(gen_spec(data, n=3))
 # set size of points in scatter plot
 sizes_of_points = len(next_data[0]) * [1]
 sizes_of_points_for_real = len(spec_real_data[:, 0]) * [1]
+
 # plots of real spectra (orange) and generated (blue)
 plt.figure(2)
 plt.scatter(next_data[0], add_noise(next_data[1], 1000, 0, 1, len(next_data[0])), sizes_of_points, 'blue')
