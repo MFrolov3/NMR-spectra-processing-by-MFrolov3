@@ -115,7 +115,6 @@ def save_to_csv(released_product):
         df = pd.DataFrame(released_product[index][0:2]).transpose()
         df.to_csv(f'{index + 1}_spec', index=False, header=False)
         ds = pd.Series(released_product[index][2:3])
-
         ds.to_csv(f'{index + 1}_concentration', index=False, header=False)
 
 
