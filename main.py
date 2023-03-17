@@ -17,7 +17,7 @@ def extract_zero(input_data):
     return signal_zero
 
 
-# setting signal to zero
+# setting DSS signal to zero
 def remove_zero(in_data):
     input_data = in_data.copy()
     for index in range(METABOLITE_QUANTITY):
@@ -91,8 +91,9 @@ def gen_spec(input_dat, max_shifts=r'assets\max_shifts.csv', n=1):
     max_shift_list = get_max_shifts_list(max_shifts)
     output_lst = []
     for index in range(n):
-        c = set_concentration()
-        output_c = 100 * set_concentration() / np.sum(c)
+        # перенести в set_concentration
+#         c = set_concentration()
+#         output_c = 100 * set_concentration() / np.sum(c)
         shift_list = generate_shift_list(max_shift_list)
 
         new_data_x = np.array([input_data[index][:, 0] + shift_list[index]
@@ -146,6 +147,7 @@ spec_real_data = r[1]
 # main generation function performance
 next_data = gen_spec(data)[0]
 # example of using function
+#n файлов
 save_to_csv(gen_spec(data, n=3))
 # set size of points in scatter plot
 sizes_of_points = len(next_data[0]) * [1]
