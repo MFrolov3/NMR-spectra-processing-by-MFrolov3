@@ -17,7 +17,7 @@ def extract_zero(input_data):
     return signal_zero
 
 
-# setting DSS signal to zero
+# setting signal to zero
 def remove_zero(in_data):
     input_data = in_data.copy()
     for index in range(METABOLITE_QUANTITY):
@@ -47,7 +47,8 @@ def generate_shift_list(max_shift_list):
 
 # setting concentration random value
 def set_concentration():
-    return np.random.uniform(0, 1, METABOLITE_QUANTITY)
+    c = np.random.uniform(0, 1, METABOLITE_QUANTITY)
+    return 100 * c / np.sum(c)
 
 
 # performing shifts by cutting numpy array from one side and adding
@@ -91,14 +92,12 @@ def gen_spec(input_dat, max_shifts=r'assets\max_shifts.csv', n=1):
     max_shift_list = get_max_shifts_list(max_shifts)
     output_lst = []
     for index in range(n):
-        # перенести в set_concentration
-#         c = set_concentration()
-#         output_c = 100 * set_concentration() / np.sum(c)
+        output_c = set_concentration()
         shift_list = generate_shift_list(max_shift_list)
 
         new_data_x = np.array([input_data[index][:, 0] + shift_list[index]
                                for index in range(METABOLITE_QUANTITY)])
-        new_data_y = np.array([c[index] * input_data[index][:, 1]
+        new_data_y = np.array([output_c[index] * input_data[index][:, 1]
                                for index in range(METABOLITE_QUANTITY)])
         joint = np.dstack((new_data_x, new_data_y))  # concatenation
 
@@ -130,7 +129,7 @@ def add_baseline(spectra_sum, ampl, mu, sigma, n):
 
 
 # load all spectra from txt files considering initial concentrations
-def load_some_data(c=np.array([1.1] * METABOLITE_QUANTITY)):
+def load_some_data(c=np.array([0.1] * METABOLITE_QUANTITY)):
     spec_real_data_temp = np.loadtxt(r'assets\mix_met001.txt')
     data_temp = [np.loadtxt(r'assets\met' + f'{i + 1}.txt') for i in range(METABOLITE_QUANTITY)]
     temp1 = np.array([c[i]*data_temp[i][:, 1] for i in range(METABOLITE_QUANTITY)])
@@ -147,7 +146,6 @@ spec_real_data = r[1]
 # main generation function performance
 next_data = gen_spec(data)[0]
 # example of using function
-#n файлов
 save_to_csv(gen_spec(data, n=3))
 # set size of points in scatter plot
 sizes_of_points = len(next_data[0]) * [1]
