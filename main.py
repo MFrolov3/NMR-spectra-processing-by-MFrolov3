@@ -17,7 +17,7 @@ def extract_zero(input_data):
     return signal_zero
 
 
-# setting signal to zero
+# setting DSS signal to zero
 def remove_zero(in_data):
     input_data = in_data.copy()
     for index in range(METABOLITE_QUANTITY):
