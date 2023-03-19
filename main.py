@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import scipy
 import random
 import csv
 
@@ -42,7 +43,7 @@ def generate_shift_list(max_shift_list):
     border = [float(max_shift_list[index][1])
               for index in range(METABOLITE_QUANTITY)]
     return np.array([random.uniform(-border[index], border[index])
-                     for index in range(20)])
+                     for index in range(METABOLITE_QUANTITY)])
 
 
 # setting concentration random value
@@ -103,6 +104,8 @@ def gen_spec(input_dat, max_shifts=r'assets\max_shifts.csv', n=1):
 
         processed_data_lst = shift_performing(input_data, joint, shift_list)
         processed_data_np = np.array(make_equal_length(processed_data_lst))
+        processed_data_np = np.vstack((processed_data_np,
+                                       np.expand_dims(extract_zero(joint), axis=0)[:, 0:processed_data_np.shape[1], :]))
         spectrum_linear_comb_cut = np.sum(processed_data_np[:, :, 1], axis=0)
         output_lst.append((processed_data_np[12, :, 0], spectrum_linear_comb_cut, output_c))
     return output_lst
@@ -124,15 +127,25 @@ def add_noise(spectra_sum, ampl, mu, sigma, n):
 
 
 # function for adding baseline to spectra
-def add_baseline(spectra_sum, ampl, mu, sigma, n):
-    return spectra_sum + ampl * np.random.normal(mu, sigma, n)
+def add_baseline_gauss(n, input_data, some_data):
+    amp_lst = np.random.uniform(2000000, 2500000, n)
+    width_lst = np.random.uniform(250, 300, n)
+    length_data = input_data.shape[0]
+    temp1 = length_data // n
+    temp2 = length_data % n
+    data_temp = []
+    for i in range(n - 1):
+        data_temp.append(amp_lst[i] * scipy.signal.windows.gaussian(temp1, width_lst[i] * 3))
+    data_temp.append(amp_lst[n-1] * scipy.signal.windows.gaussian(temp1 + temp2, width_lst[n-1] * 3))
+    return input_data + np.dstack(
+        (np.linspace(some_data[-1], some_data[0], length_data), np.concatenate(data_temp)))[0, :, 1]
 
 
 # load all spectra from txt files considering initial concentrations
 def load_some_data(c=np.array([0.1] * METABOLITE_QUANTITY)):
     spec_real_data_temp = np.loadtxt(r'assets\mix_met001.txt')
     data_temp = [np.loadtxt(r'assets\met' + f'{i + 1}.txt') for i in range(METABOLITE_QUANTITY)]
-    temp1 = np.array([c[i]*data_temp[i][:, 1] for i in range(METABOLITE_QUANTITY)])
+    temp1 = np.array([c[i] * data_temp[i][:, 1] for i in range(METABOLITE_QUANTITY)])
     output_lst = []
     for i in range(METABOLITE_QUANTITY):
         output_lst.append(np.dstack((data_temp[i][:, 0], temp1[i]))[0])
@@ -151,8 +164,12 @@ save_to_csv(gen_spec(data, n=3))
 sizes_of_points = len(next_data[0]) * [1]
 sizes_of_points_for_real = len(spec_real_data[:, 0]) * [1]
 
+
 # plots of real spectra (orange) and generated (blue)
 plt.figure(2)
 plt.scatter(next_data[0], add_noise(next_data[1], 1000, 0, 1, len(next_data[0])), sizes_of_points, 'blue')
 plt.scatter(spec_real_data[:, 0], 1.25 * spec_real_data[:, 1], sizes_of_points_for_real, 'orange')
+plt.figure(3)
+plt.scatter(next_data[0], add_baseline_gauss(5, add_noise(next_data[1], 1000, 0, 1, len(next_data[0])), next_data[0]),
+            sizes_of_points, 'blue')
 plt.show()
