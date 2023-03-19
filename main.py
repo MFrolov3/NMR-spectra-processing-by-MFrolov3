@@ -127,9 +127,9 @@ def add_noise(spectra_sum, ampl, mu, sigma, n):
 
 
 # function for adding baseline to spectra
-def add_baseline_gauss(n, input_data, some_data):
-    amp_lst = np.random.uniform(2000000, 2500000, n)
-    width_lst = np.random.uniform(250, 300, n)
+def add_baseline_gauss(n, input_data, some_data, amp_low=2000000, amp_high=2500000, width_low=250, width_high=300):
+    amp_lst = np.random.uniform(amp_low, amp_high, n)
+    width_lst = np.random.uniform(width_low, width_high, n)
     length_data = input_data.shape[0]
     temp1 = length_data // n
     temp2 = length_data % n
